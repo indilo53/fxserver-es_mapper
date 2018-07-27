@@ -61,7 +61,7 @@ function MapperObject:reload(cb)
 
 		SetModelAsNoLongerNeeded(hash)
 
-		SetEntityRotation(ref, self.rot.x, self.rot.y, self.rot.z, 2, true)
+		SetEntityRotation(ref, self.rot.x, self.rot.y, self.rot.z)
 
 	  if self.frozen then
 	  	FreezeEntityPosition(self.ref, true)
