@@ -1,13 +1,16 @@
 function stringsplit(inputstr, sep)
-  if sep == nil then
-    sep = "%s"
-  end
-  local t={} ; i=1
-  for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
-    t[i] = str
-    i = i + 1
-  end
-  return t
+	if sep == nil then
+		sep = "%s"
+	end
+
+	local t={} ; i=1
+
+	for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+		t[i] = str
+		i = i + 1
+	end
+
+	return t
 end
 
 function math.atan2(x, y)
@@ -61,8 +64,12 @@ Editor.Tools = {
 		end,
 		stop = function()
 			Editor.FreeCamEnabled = false
+			SetPedDiesInWater(PlayerPedId(), true)
 		end,
-		run = function() end
+		run = function()
+			RestorePlayerStamina(PlayerId(), 1.0)
+			SetPedDiesInWater(PlayerPedId(), false)
+		end
 	},
 
 	edit = {
@@ -75,8 +82,11 @@ Editor.Tools = {
 		stop = function()
 			Editor.FreeCamEnabled = false
 			Editor.SetCrossHair(false)
+			SetPedDiesInWater(PlayerPedId(), true)
 		end,
 		run = function()
+			RestorePlayerStamina(PlayerId(), 1.0)
+			SetPedDiesInWater(PlayerPedId(), false)
 
 			if IsControlJustReleased(0, Keys['U']) then
 				
@@ -280,47 +290,53 @@ Editor.Tools = {
 
 			Editor.ObjectSelectorCreatedObjects = {}
 
+			SetPedDiesInWater(PlayerPedId(), true)
+
 		end,
-		run = function() end
+		run = function()
+			RestorePlayerStamina(PlayerId(), 1.0)
+			SetPedDiesInWater(PlayerPedId(), false)
+		end
 	},
 
 	list = {
 		hint     = 'List',
 		shortcut = Keys['4'],
 		start    = function() end,
-		stop     = function() end,
-		run      = function() end
+		stop     = function()
+			SetPedDiesInWater(PlayerPedId(), true)
+		end,
+		run      = function()
+			RestorePlayerStamina(PlayerId(), 1.0)
+			SetPedDiesInWater(PlayerPedId(), false)
+		end
 	},
 
 }
 
 Editor.Start = function()
-
-  Citizen.CreateThread(function()
-    
+	Citizen.CreateThread(function()
 		local playerPed = GetPlayerPed(-1)
 
-    if not DoesCamExist(Editor.Cam) then
-      Editor.Cam = CreateCam('DEFAULT_SCRIPTED_CAMERA', true)
-    end
+		if not DoesCamExist(Editor.Cam) then
+			Editor.Cam = CreateCam('DEFAULT_SCRIPTED_CAMERA', true)
+		end
 
-    SetCamActive(Editor.Cam, true)
-    RenderScriptCams(true, false, 0, true, true)
+		SetCamActive(Editor.Cam, true)
+		RenderScriptCams(true, false, 0, true, true)
 
-    local coords = GetEntityCoords(playerPed)
+		local coords = GetEntityCoords(playerPed)
 
 		SetCamCoord(Editor.Cam, coords.x, coords.y, coords.z)
 		SetCamRot(Editor.Cam, 0.0, 0.0, 0.0)
 
 		SetEntityCollision(playerPed, false, false)
-  	SetEntityVisible(playerPed, false)
+		SetEntityVisible(playerPed, false)
 
-  	Editor.SelectTool('camera')
+		Editor.SelectTool('camera')
+		Editor.Started = true
 
-    Editor.Started = true
-
-  end)
-
+	end)
 end
 
 Editor.Stop = function()
@@ -1110,48 +1126,46 @@ end)
 Citizen.CreateThread(function()
 
 	while true do
-
-		Citizen.Wait(0)
+		Citizen.Wait(10)
 
 		if Editor.Started then
 
 			local playerPed = GetPlayerPed(-1)
 
-			-- Disable collision
-      for i=0, 32, 1 do
-        if i ~= PlayerId() then
-          local otherPlayerPed = GetPlayerPed(i)
-          SetEntityNoCollisionEntity(playerPed,  otherPlayerPed,  true)
-        end
-      end
+				-- Disable collision
+			for i=0, 32, 1 do
+				if i ~= PlayerId() then
+					local otherPlayerPed = GetPlayerPed(i)
+					SetEntityNoCollisionEntity(playerPed,  otherPlayerPed,  true)
+				end
+			end
 
-      -- Disable controls
+			-- Disable controls
 			DisableControlAction(0, 30,   true) -- MoveLeftRight
 			DisableControlAction(0, 31,   true) -- MoveUpDown
-      DisableControlAction(0, 1,    true) -- LookLeftRight
-      DisableControlAction(0, 2,    true) -- LookUpDown
-      DisableControlAction(0, 25,   true) -- Input Aim
+			DisableControlAction(0, 1,    true) -- LookLeftRight
+			DisableControlAction(0, 2,    true) -- LookUpDown
+			DisableControlAction(0, 25,   true) -- Input Aim
 			DisableControlAction(0, 106,  true) -- Vehicle Mouse Control Override
 
-      DisableControlAction(0, 24,   true) -- Input Attack
-      DisableControlAction(0, 140,  true) -- Melee Attack Alternate
-      DisableControlAction(0, 141,  true) -- Melee Attack Alternate
-      DisableControlAction(0, 142,  true) -- Melee Attack Alternate
-      DisableControlAction(0, 257,  true) -- Input Attack 2
-      DisableControlAction(0, 263,  true) -- Input Melee Attack
-      DisableControlAction(0, 264,  true) -- Input Melee Attack 2
+			DisableControlAction(0, 24,   true) -- Input Attack
+			DisableControlAction(0, 140,  true) -- Melee Attack Alternate
+			DisableControlAction(0, 141,  true) -- Melee Attack Alternate
+			DisableControlAction(0, 142,  true) -- Melee Attack Alternate
+			DisableControlAction(0, 257,  true) -- Input Attack 2
+			DisableControlAction(0, 263,  true) -- Input Melee Attack
+			DisableControlAction(0, 264,  true) -- Input Melee Attack 2
 
-      DisableControlAction(0, 12,   true) -- Weapon Wheel Up Down
-      DisableControlAction(0, 14,   true) -- Weapon Wheel Next
-      DisableControlAction(0, 15,   true) -- Weapon Wheel Prev
-      DisableControlAction(0, 16,   true) -- Select Next Weapon
-      DisableControlAction(0, 17,   true) -- Select Prev Weapon
+			DisableControlAction(0, 12,   true) -- Weapon Wheel Up Down
+			DisableControlAction(0, 14,   true) -- Weapon Wheel Next
+			DisableControlAction(0, 15,   true) -- Weapon Wheel Prev
+			DisableControlAction(0, 16,   true) -- Select Next Weapon
+			DisableControlAction(0, 17,   true) -- Select Prev Weapon
 
-      -- Reset playre position
-      local camCoords = GetCamCoord(Editor.Cam)
+			-- Reset playre position
+			local camCoords = GetCamCoord(Editor.Cam)
 			SetEntityCoords(playerPed, camCoords.x, camCoords.y, camCoords.z + 10.0)
-
-      -- Hint
+			-- Hint
 			SetTextComponentFormat('STRING')
 
 			local hint = Editor.Tools[Editor.CurrentTool].hint
@@ -1173,31 +1187,28 @@ Citizen.CreateThread(function()
 			AddTextComponentString(hint)
 			DisplayHelpTextFromStringLabel(0, 0, false, -1)
 
-      -- Keyboard shortcuts
-      for name, config in pairs(Editor.Tools) do
-	      if IsControlJustReleased(0, config.shortcut) or IsDisabledControlJustReleased(0, config.shortcut) then
-	      	Editor.SelectTool(name)
-	      end
-      end
-
-      -- Toggle Menu
-      if IsControlJustReleased(0, Keys['R']) then
+				-- Keyboard shortcuts
+			for name, config in pairs(Editor.Tools) do
+				if IsControlJustReleased(0, config.shortcut) or IsDisabledControlJustReleased(0, config.shortcut) then
+					Editor.SelectTool(name)
+				end
+			end
+			-- Toggle Menu
+			if IsControlJustReleased(0, Keys['R']) then
 				Editor.ShowMenu()
 			end
 
-      -- Handlers
-      if Editor.FreeCamEnabled then
-      	Editor.HandleFreeCamThisFrame()
-      end
+			-- Handlers
+			if Editor.FreeCamEnabled then
+				Editor.HandleFreeCamThisFrame()
+			end
 
-      if #Editor.SelectedObjects > 0 then
-      	Editor.HandleSelectedObjectsThisFrame()
-      end
+			if #Editor.SelectedObjects > 0 then
+				Editor.HandleSelectedObjectsThisFrame()
+			end
 
-      -- Tools
-      Editor.Tools[Editor.CurrentTool].run()
-    end
-
-  end
-
+			-- Tools
+			Editor.Tools[Editor.CurrentTool].run()
+		end
+	end
 end)
